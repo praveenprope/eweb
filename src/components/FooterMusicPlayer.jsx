@@ -2,50 +2,40 @@ import React, { useEffect, useState } from 'react';
 
 const FooterMusicPlayer = ({ currentTrack, setCurrentTrack, musicProducts }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = React.useRef(null); // Create a ref for the audio element
+  const audioRef = React.useRef(null); // Ref for the audio element
 
   useEffect(() => {
-    // Cleanup function to stop and reset audio on track change or unmount
-    const playAudio = async () => {
-      if (audioRef.current) {
-        await audioRef.current.pause(); // Ensure the previous audio is paused
-        audioRef.current.currentTime = 0; // Reset time to 0
-      }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0; // Reset audio position
 
       if (currentTrack) {
-        audioRef.current = new Audio(currentTrack);
-        await audioRef.current.play()
+        audioRef.current.src = currentTrack; // Set the new track source
+        audioRef.current.play()
           .then(() => {
-            console.log("Playing track:", currentTrack);
             setIsPlaying(true);
           })
           .catch((error) => {
-            console.error("Error playing track:", error);
+            console.error('Error playing track:', error);
           });
       }
-    };
-
-    playAudio();
-
-    // Cleanup function
+    }
+    // Cleanup function to stop the audio when component unmounts or track changes
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0; // Reset time to 0
-        console.log("Stopped track:", currentTrack);
-        setIsPlaying(false); // Reset the playing state
+        setIsPlaying(false); // Reset playing state
       }
     };
-  }, [currentTrack]); // Only run when currentTrack changes
+  }, [currentTrack]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
       audioRef.current.pause();
-      console.log("Paused track:", currentTrack);
     } else {
       audioRef.current.play()
-        .then(() => console.log("Resumed track:", currentTrack))
-        .catch((error) => console.error("Error resuming track:", error));
+        .catch((error) => console.error('Error playing audio:', error));
     }
     setIsPlaying(!isPlaying);
   };
@@ -53,13 +43,11 @@ const FooterMusicPlayer = ({ currentTrack, setCurrentTrack, musicProducts }) => 
   const handleNext = () => {
     const nextIndex = (musicProducts.findIndex((product) => product.audio === currentTrack) + 1) % musicProducts.length;
     setCurrentTrack(musicProducts[nextIndex].audio);
-    console.log("Next track set to:", musicProducts[nextIndex].audio);
   };
 
   const handlePrevious = () => {
     const prevIndex = (musicProducts.findIndex((product) => product.audio === currentTrack) - 1 + musicProducts.length) % musicProducts.length;
     setCurrentTrack(musicProducts[prevIndex].audio);
-    console.log("Previous track set to:", musicProducts[prevIndex].audio);
   };
 
   return (
@@ -72,6 +60,8 @@ const FooterMusicPlayer = ({ currentTrack, setCurrentTrack, musicProducts }) => 
       {currentTrack && (
         <p className="text-lg">Now playing: {musicProducts.find((product) => product.audio === currentTrack)?.title}</p>
       )}
+      {/* Audio element for playback */}
+      <audio ref={audioRef} />
     </footer>
   );
 };
